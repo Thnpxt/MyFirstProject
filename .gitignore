@@ -1,52 +1,47 @@
-# Prerequisites
-*.d
+#include <HX711_ADC.h> // need to install 
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h> // need to install
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+HX711_ADC LoadCell(6, 7); // parameters: dt pin 6, sck pin 7;
+LiquidCrystal_I2C lcd(0x27, 16,2); // 0x27 is the i2c address might different;you can check with Scanner
 
-# Linker output
-*.ilk
-*.map
-*.exp
+const int Red_pin = 3;
+const int Green_pin = 4;
+const int Blue_pin = 5; 
+const int Red_pin2 = 8;
+const int Green_pin2 = 9;
+const int Blue_pin2 = 10; 
 
-# Precompiled Headers
-*.gch
-*.pch
+void setup() 
+{
+  LoadCell.begin(); // start connection to HX711
+  LoadCell.start(2000); // load cells gets 2000ms of time to stabilize
+  LoadCell.setCalFactor(1000.0); // calibration factor for load cell => dependent on your individual setup
+  lcd.begin(16,2);
+  lcd.init(); 
+  lcd.backlight();
+  pinMode(Red_pin,OUTPUT);
+  pinMode(Green_pin,OUTPUT);
+  pinMode(Blue_pin,OUTPUT);
+  pinMode(Red_pin2,OUTPUT);
+  pinMode(Green_pin2,OUTPUT);
+  pinMode(Blue_pin2,OUTPUT);
+}
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+void loop() {
+  LoadCell.update(); // retrieves data from the load cell
+  float i = LoadCell.getData(); // get output value
+  lcd.setCursor(0, 0); // set cursor to first row
+  lcd.print("Weight[g]:"); // print out to LCD
+  lcd.setCursor(0, 1); // set cursor to second row
+  lcd.print(i); // print out the retrieved value to the second row
+  if (i >= 50 && i < 100) {
+    analogWrite(Red_pin, 255); // Turn on red LED
+    analogWrite(Green_pin2, 0); // Turn off green LED
+  } else if (i >= 100) {
+    analogWrite(Green_pin2, 255); // Turn off green LED
+  } else {
+    analogWrite(Red_pin, 0); // Turn off red LED
+    analogWrite(Green_pin2, 0); // Turn off blue LED
+  }
+}
